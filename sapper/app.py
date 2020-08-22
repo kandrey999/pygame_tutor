@@ -4,7 +4,7 @@ from grid import Grid
 
 # pygame.Rect()
 class App:
-    def __init__(self, block_size: int, block_count, bombs_count: int):
+    def __init__(self, block_size: int, block_count: tuple, bombs_count: int):
         pygame.init()
         self.block_size = block_size
         self.block_count = block_count
