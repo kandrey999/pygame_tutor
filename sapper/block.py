@@ -29,9 +29,8 @@ class Block:
         self.image.fill((255, 255, 255))
         self.image.blit(image, (self.size // 4, 0))
 
-    def react_on_click(self, mouse_keys, bombs_near):
+    def click_handler(self, mouse_keys):
         font = pygame.font.Font(pygame.font.match_font('arial'), 40)
-
         if mouse_keys[0] and not self.is_open and not self.is_marked:
             if self.is_bomb:
                 # self.
@@ -55,17 +54,23 @@ class Block:
                 self.image.fill((255, 255, 255))
 
 
-    def open_as_empty(self):
-        if not self.is_open:
-            self.is_open = True
-            self.image.fill((150, 150, 150))
+    # def open_as_empty(self):
+    #     if not self.is_open and not self.is_bomb:
+    #         self.is_open = True
+    #         self.image.fill((150, 150, 150))
 
     def open_as_normal(self):
-        if not self.is_open:
+        if not self.is_open and not self.is_bomb and self.bombs_near:
             self.is_open = True
             font = pygame.font.Font(pygame.font.match_font('arial'), 50)
             image = font.render(str(self.bombs_near), True, (0, 0, 255))
             self.change_image(image)
+
+        elif not self.bombs_near:
+            self.is_open = True
+            self.image.fill((150, 150, 150))
+
+
             # self.image.fill((255, 255, 255))
 
             # self.image.blit(image, (self.size // 4, 0))

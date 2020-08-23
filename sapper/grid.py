@@ -1,5 +1,5 @@
 import pygame
-from random import randrange
+from random import randrange, choice
 from block import Block
 
 
@@ -11,23 +11,21 @@ class Grid:
         # self.block_count = self.screen.w // self.block_size, self.screen.h // self.block_size
         self.bombs_count = bombs_count
         self.grid = [[Block(self.screen, (x, y), self.block_size) for x in
-                      range(self.block_count[0] + 5)] for y in range(self.block_count[1] + 5)]
+                      range(self.block_count[0] + 1)] for y in range(self.block_count[1] + 5)]
         self.bombs = []
-        self.init_bombs()
+        # self.init_bombs()
+        self.set_random_bombs(self.bombs_count)
         # self.calculate_bombs_near_block_in_grid()
-        self.f()
+        self.get_neighbour_bombs()
         self.a = False
 
     @property
     def flatten(self):
-        # for row in self.grid:
-        #     for block in row:
-        #         yield block
         for y in range(self.block_count[1]):
             for x in range(self.block_count[0]):
                 yield self.grid[y][x]
 
-    def f(self):
+    def get_neighbour_bombs(self):
         for block in self.flatten:
             block.bombs_near = self.calculate_bombs_near_block(block)
             # self.calculate_bombs_near_block(block)
@@ -36,26 +34,30 @@ class Grid:
     # def calculate_bombs_near_block_in_grid(self):
     #     for block in self.flatten:
     #         block.bombs_near = self.calculate_bombs_near_block(block)
-        # [block.bombs_near = self.calculate_bombs_near_block_in_grid(block) for block in self.flatten]
+    # [block.bombs_near = self.calculate_bombs_near_block_in_grid(block) for block in self.flatten]
 
     def draw(self):
         [[block.draw() for block in row] for row in self.grid]
 
-    def init_bombs(self):
-        count_set_bombs = 0
-        max_set_bombs = self.block_count[0] * self.block_count[1]
+    # def init_bombs(self):
+    # set_bombs_count = 0
+    # max_bombs_count = self.block_count[0] * self.block_count[1]
 
-        if self.bombs_count > max_set_bombs:
-            print(f'BOMBS LIMIT, BOMBS COUNT = {max_set_bombs}')
-            self.bombs_count = max_set_bombs
+    # while set_bombs_count != self.bombs_count:
+    #     block = self.grid[randrange(self.block_count[1])][randrange(self.block_count[0])]
+    #     if not block.is_bomb:
+    #         block.is_bomb = True
+    #         max_bombs_count += 1
+    #         self.bombs.append(block)
 
-        while count_set_bombs != self.bombs_count:
+    def set_random_bombs(self, n: int):
+        given_bombs = 0
+        while given_bombs != n:
             block = self.grid[randrange(self.block_count[1])][randrange(self.block_count[0])]
             if not block.is_bomb:
                 block.is_bomb = True
-                count_set_bombs += 1
+                given_bombs += 1
                 self.bombs.append(block)
-        # [print(block.pos) for block in self.bombs]
 
     def check_bombs_state(self):
         if sum([block.is_open for block in self.bombs]) > 0:
@@ -70,33 +72,29 @@ class Grid:
         # for i in range(self.bombs_count):
         #     self.grid[randrange(self.block_count[1])][randrange(self.block_count[0])].is_bomb = True
 
-    def check_mouse_click_on_blocks_and_calculate_bombs_near(self, mouse_keys: tuple, mouse_pos: tuple):
+    def get_clicked_block(self, mouse_keys: tuple, mouse_pos: tuple) -> Block:
         if not (sum(mouse_keys) and sum(mouse_pos)): return
         mouse_rect = pygame.Rect(*mouse_pos, 1, 1)
         for block in self.flatten:
             if mouse_rect.colliderect(block.rect):
-                return block, self.calculate_bombs_near_block(block)
+                return block
 
+    def open_zero_neighbours(self, block, mouse_keys):
+        # if not block.is_open and not block.is_bomb and mouse_keys[0] and :
+        # print('i')
+        # block.open_as_empty()
+        # elif mouse_keys[0] and not block.is_open:
+        if mouse_keys[0] and not block.is_open:
+            [neighbour.open_as_normal() for neighbour in self.get_neighbours(block) if not neighbour.is_bomb]
 
-    def open_zero_blocks(self, block, bombs_near_block):
-        if bombs_near_block == 0 and not block.is_open:
-            print('i')
-            # for a in self.get_neighbours(block):
-            block.open_as_empty()
-            [neighbour.open_as_empty() if neighbour.bombs_near == 0 else neighbour.open_as_normal() for neighbour in self.get_neighbours(block)]
-            # [neighbour.open_as_normal() for neighbour in self.get_neighbours(block) if neighbour.bombs_near > 0]
+    # [neighbour.open_as_normal() for neighbour in self.get_neighbours(block) if neighbour.bombs_near > 0]
 
-            # Y ОЧЕНЬ ВЫСОКИЙ СТАНОВИТСЯ
-            # [print(neighbour.bombs_near) for neighbour in self.get_neighbours(block) if neighbour.bombs_near == 0]
-                # print(a.bombs_near)
-
-
+    # [print(neighbour.bombs_near) for neighbour in self.get_neighbours(block) if neighbour.bombs_near == 0]
+    # print(a.bombs_near)
 
     # def open_neighbours(self, block):
     #     block.open()
     #     [neighbour.open() for neighbour in self.get_neighbours(block)]
-
-
 
     # def click_on_block_react(self, mouse_keys, mouse_pos):
     #     if sum(mouse_keys) > 0:
@@ -123,24 +121,25 @@ class Grid:
     def calculate_bombs_near_block(self, block):
         return sum(neighbour.is_bomb for neighbour in self.get_neighbours(block))
 
-
     def get_neighbours(self, block):
         x, y = block.grid_pos
 
-        # print(x, y)
-        yield self.grid[y - 1][x - 1]
-        yield self.grid[y - 1][x]
-        # print(x, y)
-        yield self.grid[y - 1][x + 1]
-        yield self.grid[y][x - 1]
-        yield self.grid[y][x + 1]
-        yield self.grid[y + 1][x - 1]
-        yield self.grid[y + 1][x]
-        yield self.grid[y + 1][x + 1]
+        try:
+            yield self.grid[y - 1][x - 1]
+            yield self.grid[y - 1][x]
+            yield self.grid[y - 1][x + 1]
+            yield self.grid[y][x - 1]
+            yield self.grid[y][x + 1]
+            yield self.grid[y + 1][x - 1]
+            yield self.grid[y + 1][x]
+            yield self.grid[y + 1][x + 1]
+
+        except IndexError:
+            print('Corner Block')
 
         # self.grid[y][x].bombs_near = sum
 
-    def calculate_count_of_marked_blocks(self):
+    def get_count_of_marked_blocks(self):
         # s = 0
         # for row in self.grid:
         #     for block in row:
@@ -150,18 +149,22 @@ class Grid:
         sum((block.is_marked for block in self.flatten))
 
     def update_blocks(self, mouse_keys, mouse_pos):
-        clicked_block, bombs_near_block = None, None
-        clicked_block_and_bombs_near = self.check_mouse_click_on_blocks_and_calculate_bombs_near(mouse_keys, mouse_pos)
-        if clicked_block_and_bombs_near:
-            clicked_block, bombs_near_block = clicked_block_and_bombs_near
-            self.open_zero_blocks(clicked_block, bombs_near_block)
-            clicked_block.react_on_click(mouse_keys, bombs_near_block)
+        clicked_block = self.get_clicked_block(mouse_keys, mouse_pos)
+        if clicked_block:
+            if not clicked_block.is_open:
+                neighbours = list(self.get_neighbours(clicked_block))
+                for i in range(10):
+                    # for i in range(10):
+                    #     self.open_zero_neighbours(choice(list(self.get_neighbours(choice(neighbours)))), mouse_keys)
+                    self.open_zero_neighbours(choice(neighbours), mouse_keys)
+
+            self.open_zero_neighbours(clicked_block, mouse_keys)
+
+            clicked_block.click_handler(mouse_keys)
             # self.calculate_count_of_marked_blocks()
 
         # if bombs_near_block == 0:
         #     clicked_block.
-
-
 
     def update(self, mouse_keys, mouse_pos):
         self.update_blocks(mouse_keys, mouse_pos)
